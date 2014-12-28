@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Bro Intel Framework headers and types
-bro_header="#fields indicator\tindicator_type\tmeta.source\tmeta.desc\tmeta.url"
+bro_header="#fields\tindicator\tindicator_type\tmeta.source\tmeta.desc\tmeta.url"
 bro_domain="Intel::DOMAIN"
 bro_addr="Intel::ADDR"
 bro_hash="Intel::FILE_HASH"
@@ -162,6 +162,14 @@ while getopts ":f:s:d:u:htp" opt; do
 		;;
         esac
 done
+if [ -z $meta_description ]
+then
+meta_description="-"
+fi
+if [ -z $meta_url ]
+then
+meta_url="-"
+fi
 if [ $f_required -eq 0 ]
 then
 echo "-f is required parameter"
@@ -211,8 +219,8 @@ ${f%.*}_hashes.dat
 ${f%.*}_ips.dat
 Please note that some extracted indicators might be incorrect so check resulting files before 
 using them in production.
-Now upload them into bro Intel folder(e.g. /opt/bro/share/bro/intel/)
-And change __load.bro__ script to include your new files with indicators
+Now upload them into some folder(e.g. /opt/bro/share/bro/intel/)
+And change local.bro script to include your new files with indicators
 redef Intel::read_files += {
         "/opt/bro/share/bro/intel/my_new_file.dat"
 };
