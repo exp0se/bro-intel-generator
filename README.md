@@ -40,7 +40,7 @@ Create Intel directrory inside policy dir
 ```
 mkdir /usr/local/bro/share/bro/policy/intel
 ```
-Create "__load__.bro" file with following content:
+Create \__load\__.bro file with following content:
 ```
 @load frameworks/intel/seen
 @load frameworks/intel/do_notice
