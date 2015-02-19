@@ -42,7 +42,7 @@ function html_input () {
 }
 
 function ip_generation () {
-	# This rexep will match ipv4 address
+	# This regexp will match ipv4 address
 	# Assuming reports post them separately
 	ipaddr="^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"
 	data=`cat $1|egrep $ipaddr|sort|uniq`
@@ -158,52 +158,44 @@ while getopts ":f:s:d:u:htp" opt; do
 		?)
 		echo "Invalid option: - $OPTARG" >&2
 		echo "Use -h for usage info" 
-               	exit
+               	exit 1
 		;;
         esac
 done
 if [ -z $meta_description ]
-then
-meta_description="-"
+	then meta_description="-"
 fi
 if [ -z $meta_url ]
-then
-meta_url="-"
+	then meta_url="-"
 fi
 if [ $f_required -eq 0 ]
-then
-echo "-f is required parameter"
-exit 1
+	then echo "-f is required parameter"
+	exit 1
 fi
 if [ $s_set -eq 0 ]
-then
-meta_source=${f%.*}
+	then meta_source=${f%.*}
 fi
 if [ $html -eq 1 -a $pdf -eq 1 ]
-then
-echo "Both html and pdf options can't be set. Choose only one."
-exit 1
+	then echo "Both html and pdf options can't be set. Choose only one."
+	exit 1
 fi
 }
 
 # Main code
 # check that arguments present in input
 if [ -z "$1" ]
-then
-usage
-exit 1
+	then usage
+	exit 1
 fi
 check_stuff
 main "$@"
 if [ $html -eq 1 ]
-then
-html_input $f
+	then html_input $f
 elif [ $pdf -eq 1 ]
-then
-pdf_input $f
+	then pdf_input $f
 else
-echo "html or pdf input options required"
-exit 1
+	echo "html or pdf input options required"
+	exit 1
 fi
 domain_generation $txt_file
 hash_generation $txt_file

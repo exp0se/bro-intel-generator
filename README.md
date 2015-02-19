@@ -4,7 +4,7 @@ bro-intel-generator
 Script for generating Bro intel files from pdf or html reports
 
 
-# Dependecies
+# Dependencies
 
 We make use of some additional packages that you have to install
 
@@ -30,6 +30,15 @@ Please note that sometimes indicators extracted would be incorrect and it is goo
 
 At the moment only domains, ips and hash indicators are supported
 
+We assume reports contain separate section list of indicators posted like in Appendix
+
+There is also a possibility that files with extensions will be matched by our domain matching regexp, so there is a variable to exclude them
+see code below
+
+```
+domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar)$"
+```
+
 If some indicators is not found generated files would be blank.
 
 Then you install them in bro and you good to go
@@ -50,5 +59,8 @@ redef Intel::read_files += {
         @DIR + "/apt_report_domains.dat",
 };
 ``` 
-Put newly generated files into Intel dir you create in step 1 and
-Install and restart new bro policy with broctl install && broctl restart
+Put newly generated files into Intel dir you created in early and
+Install and restart new bro policy with
+```
+ broctl install && broctl restart
+```
