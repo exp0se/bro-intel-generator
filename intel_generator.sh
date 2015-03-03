@@ -10,10 +10,10 @@ bro_hash="Intel::FILE_HASH"
 function check_stuff () {
 
 	# We make use of certain utilities so we make sure they are present here
-	if [ ! -f /usr/bin/html2text ]
+        if [ ! -f $(which html2text) ]
 		then echo "Can't find html2text package. Install it with aptitude install html2text"
 		exit 1
-	elif [ ! -f /usr/bin/pdftotext ]
+        elif [ ! -f $(which pdftotext) ]
 		then echo "Can't find pdftotext package. Install it with aptitute install poppler-utils"
 		exit 1
 	fi
