@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Bro Intel Framework headers and types
 bro_header="#fields\tindicator\tindicator_type\tmeta.source\tmeta.desc\tmeta.url"
@@ -6,86 +6,76 @@ bro_domain="Intel::DOMAIN"
 bro_addr="Intel::ADDR"
 bro_hash="Intel::FILE_HASH"
 
+function die {
+  echo "$*"
+  exit 1
+}
 
 function check_stuff () {
-
-	# We make use of certain utilities so we make sure they are present here
-	if [ ! -f /usr/bin/html2text ]
-		then echo "Can't find html2text package. Install it with aptitude install html2text"
-		exit 1
-	elif [ ! -f /usr/bin/pdftotext ]
-		then echo "Can't find pdftotext package. Install it with aptitute install poppler-utils"
-		exit 1
-	fi
-
+  # We make use of certain utilities so we make sure they are present here
+  if [ ! -f $(which html2text) ]; then
+    die "Can't find html2text package. Install it with aptitude install html2text"
+  elif [ ! -f $(which pdftotext) ]; then
+    die "Can't find pdftotext package. Install it with aptitute install poppler-utils"
+  fi
 }
 
 function pdf_input () {
-	# Convert pdf to text and save it in temp file
-	pdftotext $1 /tmp/bro_generator_pdf$$.txt
-	if [ $? -ne 0 ]
-		then echo "pdftotext failed. Aborting..."
-		exit 1
-	fi
-	txt_file="/tmp/bro_generator_pdf$$.txt"
+  # Convert pdf to text and save it in temp file
+  pdftotext $1 /tmp/bro_generator_pdf$$.txt || die "pdftotext failed. Aborting..."
+  txt_file="/tmp/bro_generator_pdf$$.txt"
 }
 
 function html_input () {
-
-	# Convert html page to text and save it in temp file 
-	html2text -o /tmp/bro_generator_html$$.txt $1
-	if [ $? -ne 0 ]
-                then echo "html2text failed. Aborting..."
-                exit 1
-        fi
-	txt_file="/tmp/bro_generator_html$$.txt"
+  # Convert html page to text and save it in temp file
+  html2text -o /tmp/bro_generator_html$$.txt $1 || die "html2text failed. Aborting..."
+  txt_file="/tmp/bro_generator_html$$.txt"
 }
 
 function ip_generation () {
-	# This regexp will match ipv4 address
-	# Assuming reports post them separately
-	ipaddr="^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"
-	data=`cat $1|egrep $ipaddr|sort|uniq`
-        echo -e $bro_header > ${1%.*}_ips.dat
-        for ip in $data
-        do
-                echo -e "$ip\t$bro_addr\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_ips.dat
-        done
-
+  # This regexp will match ipv4 address
+  # Assuming reports post them separately
+  ipaddr="^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"
+  data=`cat $1|egrep $ipaddr|sort|uniq`
+  echo -e $bro_header > ${1%.*}_ips.dat
+  for ip in $data
+  do
+    echo -e "$ip\t$bro_addr\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_ips.dat
+  done
 }
 
 function hash_generation () { # pass filename
-	# This regexp will match MD5 hashes
-	# Assuming reports post them separately
-	md5_hash="^[a-f0-9]{32}$"
-        data=`cat $1|egrep $md5_hash|sort|uniq`
-        echo -e $bro_header > ${1%.*}_hashes.dat
-        for hash in $data
-        do
-                echo -e "$hash\t$bro_hash\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_hashes.dat
-       	done
+  # This regexp will match MD5 hashes
+  # Assuming reports post them separately
+  md5_hash="^[a-f0-9]{32}$"
+  data=`cat $1|egrep $md5_hash|sort|uniq`
+  echo -e $bro_header > ${1%.*}_hashes.dat
+  for hash in $data
+  do
+    echo -e "$hash\t$bro_hash\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_hashes.dat
+  done
 }
 
 
 function domain_generation () { # pass filename
-	# This regexp will match domains and infinite number of subdomains
-	# Like example.com, i.dont.care.example.com, example[.]com
-	# We match [.] domain, because some vendors too cool to write in ordinary fashion
-	# Assuming reports will contain separate list of domains
-	# we match only separate domain names, not those as part of url
-	domain_regexp="^([a-z0-9\-]+\.)*[a-z0-9\-]+(\.|\[\.\])[a-z]+$"
-	# Reports often include filenames with extension that will also be matched by our domain
-	# regexp. Use this to exclude them from matching by extenstion
-	domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar)$"
-	#Strip [.] from domain name  
-	strip_domain="s/\[//g -e s/\]//g"
-	data=`cat $1|egrep $domain_regexp|egrep -v $domain_exclude|sort|uniq`
-	echo -e $bro_header > ${1%.*}_domains.dat
-	for domain in $data
-	do
-		domain=`echo $domain|sed -e $strip_domain` 
-		echo -e "$domain\t$bro_domain\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_domains.dat
-	done
+  # This regexp will match domains and infinite number of subdomains
+  # Like example.com, i.dont.care.example.com, example[.]com
+  # We match [.] domain, because some vendors too cool to write in ordinary fashion
+  # Assuming reports will contain separate list of domains
+  # we match only separate domain names, not those as part of url
+  domain_regexp="^([a-z0-9\-]+\.)*[a-z0-9\-]+(\.|\[\.\])[a-z]+$"
+  # Reports often include filenames with extension that will also be matched by our domain
+  # regexp. Use this to exclude them from matching by extenstion
+  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar)$"
+  #Strip [.] from domain name
+  strip_domain="s/\[//g -e s/\]//g"
+  data=`cat $1|egrep $domain_regexp|egrep -v $domain_exclude|sort|uniq`
+  echo -e $bro_header > ${1%.*}_domains.dat
+  for domain in $data
+  do
+    domain=`echo $domain|sed -e $strip_domain`
+    echo -e "$domain\t$bro_domain\t$meta_source\t$meta_description\t$meta_url" >> ${1%.*}_domains.dat
+  done
 }
 
 function usage () {
@@ -123,80 +113,66 @@ OPTIONS:
 
 EOF
 }
-  
+
 function main () {
 f_required=0
 s_set=0
 html=0
 pdf=0
 while getopts ":f:s:d:u:htp" opt; do
-        case "$opt" in
-	        f)
-		f_required=1
-		f=$OPTARG
-                ;;
-		t)
-		html=1
-		;;
-		p)
-		pdf=1
-		;;
-		s)
-		s_set=1
-		meta_source=$OPTARG
-		;;
-		d)
-		meta_description=$OPTARG
-		;;
-		u)
-		meta_url=$OPTARG
-		;;
-		h)
-		usage
-		exit 1
-		;;
-		?)
-		echo "Invalid option: - $OPTARG" >&2
-		echo "Use -h for usage info" 
-               	exit 1
-		;;
-        esac
+  case "$opt" in
+    f)
+    f_required=1
+    f=$OPTARG
+    ;;
+    t)
+    html=1
+    ;;
+    p)
+    pdf=1
+    ;;
+    s)
+    s_set=1
+    meta_source=$OPTARG
+    ;;
+    d)
+    meta_description=$OPTARG
+    ;;
+    u)
+    meta_url=$OPTARG
+    ;;
+    h)
+    usage
+    exit 1
+    ;;
+    ?)
+    echo "Invalid option: - $OPTARG" >&2
+    die "Use -h for usage info"
+    ;;
+  esac
 done
-if [ -z $meta_description ]
-	then meta_description="-"
-fi
-if [ -z $meta_url ]
-	then meta_url="-"
-fi
-if [ $f_required -eq 0 ]
-	then echo "-f is required parameter"
-	exit 1
-fi
-if [ $s_set -eq 0 ]
-	then meta_source=${f%.*}
-fi
-if [ $html -eq 1 -a $pdf -eq 1 ]
-	then echo "Both html and pdf options can't be set. Choose only one."
-	exit 1
-fi
+
+[ $meta_description ]         || meta_description="-"
+[ $meta_url ]                 || meta_url="-"
+[ $f_required -eq 1 ]         || die "-f is required parameter"
+[ $s_set -eq 1 ]              || meta_source=${f%.*}
+[ $html -eq 1 -a $pdf -eq 1 ] && die "Both html and pdf options can't be set. Choose only one."
 }
 
 # Main code
 # check that arguments present in input
-if [ -z "$1" ]
-	then usage
-	exit 1
-fi
+[ "$1" ] || { usage; exit 1; }
+
 check_stuff
 main "$@"
 if [ $html -eq 1 ]
-	then html_input $f
+  then html_input $f
 elif [ $pdf -eq 1 ]
-	then pdf_input $f
+  then pdf_input $f
 else
-	echo "html or pdf input options required"
-	exit 1
+  die "html or pdf input options required"
 fi
+
 domain_generation $txt_file
 hash_generation $txt_file
 ip_generation $txt_file
@@ -209,7 +185,7 @@ Following intel files was created:
 ${f%.*}_domains.dat
 ${f%.*}_hashes.dat
 ${f%.*}_ips.dat
-Please note that some extracted indicators might be incorrect so check resulting files before 
+Please note that some extracted indicators might be incorrect so check resulting files before
 using them in production.
 Now upload them into some folder(e.g. /opt/bro/share/bro/intel/)
 And change local.bro script to include your new files with indicators
@@ -217,4 +193,3 @@ redef Intel::read_files += {
         "/opt/bro/share/bro/intel/my_new_file.dat"
 };
 EOF
-
