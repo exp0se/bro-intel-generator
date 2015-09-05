@@ -48,10 +48,12 @@ function ip_generation () {
 }
 
 function hash_generation () { # pass filename
-  # This regexp will match MD5 hashes
+  # This regexp will match MD5\SHA1\SHA256 hashes
   # Assuming reports post them separately
-  md5_hash="^[a-f0-9]{32}$"
-  data=`cat $1|egrep $md5_hash|sort|uniq`
+  md5_hash="[a-f0-9]{32}"
+  sha1_hash="[a-f0-9]{40}"
+  sha256_hash="[a-f0-9]{64}"
+  data=`cat $1|egrep "($md5_hash|$sha1_hash|$sha256_hash)"|sort|uniq`
   if [ -z "$data" ]
 	then return 1
   fi
@@ -72,7 +74,7 @@ function domain_generation () { # pass filename
   domain_regexp="^([a-z0-9\-]+\.)*[a-z0-9\-]+(\.|\[\.\])[a-z]+$"
   # Reports often include filenames with extension that will also be matched by our domain
   # regexp. Use this to exclude them from matching by extenstion
-  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar)$"
+  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp)$"
   #Strip [.] from domain name
   strip_domain="s/\[//g -e s/\]//g"
   data=`cat $1|egrep $domain_regexp|egrep -v $domain_exclude|sort|uniq`
@@ -132,7 +134,7 @@ while getopts ":f:s:d:u:htp" opt; do
   case "$opt" in
     f)
     f_required=1
-    f=$OPTARG
+    f="$OPTARG"
     ;;
     t)
     html=1
