@@ -199,8 +199,8 @@ if [ ! -d intel ]
 	then mkdir intel
 fi
 # create subfolder for report
-if [ ! -d $meta_source ] 
-	then mkdir $meta_source
+if [ ! -d intel/$meta_source ] 
+	then mkdir intel/"$meta_source"
 fi
 if [ -f ${f%.*}_domains.dat ]
 	then mv ${f%.*}_domains.dat intel/$meta_source/
@@ -218,3 +218,22 @@ redef Intel::read_files += {
 	@DIR + "/${f%.*}_ips.dat"
 };
 EOF
+if [ -f intel/__load__.bro ]
+then
+echo "@load ./$meta_source" >> intel/__load__.bro
+else
+cat > intel/__load__.bro << EOF
+@load base/frameworks/intel
+@load frameworks/intel/seen
+@load ./$meta_source
+EOF
+fi
+cat <<EOF
+[+] All Done!
+[+] Now simply copy intel folder located in current directory
+[+] into bro policy folder and simply add @load intel to local.bro script
+[+] and you all set!
+[+] Or if you wish you can continue generate bro intel files and
+[+] they will be added to intel directory then you can copy everything at once.
+EOF
+
