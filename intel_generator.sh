@@ -77,7 +77,7 @@ function domain_generation () { # pass filename
   domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp|*.doc|*.xls|*.ppt|*.pdf|*.txt)$"
   #Strip [.] from domain name
   strip_domain="s/\[//g -e s/\]//g"
-  data=`cat "$1"|egrep -o "$domain_regexp"|egrep -v "$domain_exclude"|sort|uniq`
+  data=`cat "$1"|egrep "$domain_regexp"|egrep -v "$domain_exclude"|sort|uniq`
   if [ -z "$data" ]
         then return 1
   fi 
