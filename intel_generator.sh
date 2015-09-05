@@ -14,21 +14,21 @@ function die {
 function check_stuff () {
   # We make use of certain utilities so we make sure they are present here
   if [ ! -f $(which html2text) ]; then
-    die "Can't find html2text package. Install it with aptitude install html2text"
+    die "[-] Can't find html2text package. Install it with aptitude install html2text"
   elif [ ! -f $(which pdftotext) ]; then
-    die "Can't find pdftotext package. Install it with aptitute install poppler-utils"
+    die "[-] Can't find pdftotext package. Install it with aptitute install poppler-utils"
   fi
 }
 
 function pdf_input () {
   # Convert pdf to text and save it in temp file
-  pdftotext $1 /tmp/bro_generator_pdf$$.txt || die "pdftotext failed. Aborting..."
+  pdftotext $1 /tmp/bro_generator_pdf$$.txt || die "[-] pdftotext failed. Aborting..."
   txt_file="/tmp/bro_generator_pdf$$.txt"
 }
 
 function html_input () {
   # Convert html page to text and save it in temp file
-  html2text -o /tmp/bro_generator_html$$.txt $1 || die "html2text failed. Aborting..."
+  html2text -o /tmp/bro_generator_html$$.txt $1 || die "[-] html2text failed. Aborting..."
   txt_file="/tmp/bro_generator_html$$.txt"
 }
 
@@ -163,9 +163,9 @@ done
 
 [ $meta_description ]         || meta_description="-"
 [ $meta_url ]                 || meta_url="-"
-[ $f_required -eq 1 ]         || die "-f is required parameter"
+[ $f_required -eq 1 ]         || die "[-] -f is required parameter"
 [ $s_set -eq 1 ]              || meta_source=${f%.*}
-[ $html -eq 1 -a $pdf -eq 1 ] && die "Both html and pdf options can't be set. Choose only one."
+[ $html -eq 1 -a $pdf -eq 1 ] && die "[-] Both html and pdf options can't be set. Choose only one."
 }
 
 # Main code
@@ -179,7 +179,7 @@ if [ $html -eq 1 ]
 elif [ $pdf -eq 1 ]
   then pdf_input $f
 else
-  die "html or pdf input options required"
+  die "[-] html or pdf input options required"
 fi
 
 domain_generation $txt_file
