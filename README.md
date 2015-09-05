@@ -39,28 +39,37 @@ see code below
 domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar)$"
 ```
 
-If some indicators is not found generated files would be blank.
 
 Then you install them in bro and you good to go
 
 For installing them in Bro you need to do the following:
 
-Create Intel directrory inside policy dir
+Copy resulting intel directory into bro policy directory
 ```
-mkdir /usr/local/bro/share/bro/policy/intel
+cp -r intel /usr/local/bro/share/bro/policy/
 ```
-Create \__load\__.bro file with following content:
+Add intel into local.bro script
 ```
-@load frameworks/intel/seen
-@load frameworks/intel/do_notice
-
-
-redef Intel::read_files += {
-        @DIR + "/apt_report_domains.dat",
-};
+@load intel
 ``` 
-Put newly generated files into Intel dir you created in early and
+
 Install and restart new bro policy with
 ```
  broctl install && broctl restart
 ```
+# How to generate IOCs from multiple files
+
+Download reports into single folder
+
+To generate IOCs from all of them do the following:
+```
+cd apt_reports
+IFS=$'\n'
+for i in `ls`; do ../bro-intel-generator/intel_generator.sh -f $i -p;done
+unset IFS
+```
+
+After command complete you will have intel folder in the same directory
+
+with all IOCs.
+
