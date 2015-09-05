@@ -37,6 +37,9 @@ function ip_generation () {
   # Assuming reports post them separately
   ipaddr="^([0-9]{1,3}[\.]){3}[0-9]{1,3}$"
   data=`cat $1|egrep $ipaddr|sort|uniq`
+  if [ -z "$data" ]
+        then return 1
+  fi
   echo -e $bro_header > ${1%.*}_ips.dat
   for ip in $data
   do
@@ -49,6 +52,9 @@ function hash_generation () { # pass filename
   # Assuming reports post them separately
   md5_hash="^[a-f0-9]{32}$"
   data=`cat $1|egrep $md5_hash|sort|uniq`
+  if [ -z "$data" ]
+	then return 1
+  fi
   echo -e $bro_header > ${1%.*}_hashes.dat
   for hash in $data
   do
@@ -70,6 +76,9 @@ function domain_generation () { # pass filename
   #Strip [.] from domain name
   strip_domain="s/\[//g -e s/\]//g"
   data=`cat $1|egrep $domain_regexp|egrep -v $domain_exclude|sort|uniq`
+  if [ -z "$data" ]
+        then return 1
+  fi  
   echo -e $bro_header > ${1%.*}_domains.dat
   for domain in $data
   do
@@ -107,7 +116,7 @@ OPTIONS:
   -f  REQUIRED Report file.
   -t  REQUIRED Indicate that report file is in html format
   -p  REQUIRED Indicate that report file is in pdf format
-  -s  OPTIONAL meta.source in bro intel file. Default is report name. For example "fireeye report".
+  -s  OPTIONAL meta.source in bro intel file. Default is report name. For example "fireeye report". Also used as subdirectory name for intel files.
   -d  OPTIONAL meta.desc in bro intel file. Default is none. For example "CnC Host"
   -u  OPTIONAL meta.url in bro intel file. Default is none. Refernce url for intel, like "http://doc.emergingthreats.net/2002494"
 
@@ -176,20 +185,36 @@ fi
 domain_generation $txt_file
 hash_generation $txt_file
 ip_generation $txt_file
+
 # Move our temp file back into current folder with initial name.dat
-mv ${txt_file%.*}_domains.dat ${f%.*}_domains.dat
-mv ${txt_file%.*}_hashes.dat ${f%.*}_hashes.dat
-mv ${txt_file%.*}_ips.dat ${f%.*}_ips.dat
-cat << EOF
-Following intel files was created:
-${f%.*}_domains.dat
-${f%.*}_hashes.dat
-${f%.*}_ips.dat
-Please note that some extracted indicators might be incorrect so check resulting files before
-using them in production.
-Now upload them into some folder(e.g. /opt/bro/share/bro/intel/)
-And change local.bro script to include your new files with indicators
+if [ -f ${txt_file%.*}_domains.dat ]
+	then mv ${txt_file%.*}_domains.dat ${f%.*}_domains.dat
+elif [ -f ${txt_file%.*}_hashes.dat ]
+	then mv ${txt_file%.*}_hashes.dat ${f%.*}_hashes.dat
+elif [ -f ${txt_file%.*}_ips.dat ]
+	then mv ${txt_file%.*}_ips.dat ${f%.*}_ips.dat
+fi
+# prepare intel folder
+if [ ! -d intel ]
+	then mkdir intel
+fi
+# create subfolder for report
+if [ ! -d $meta_source ] 
+	then mkdir $meta_source
+fi
+if [ -f ${f%.*}_domains.dat ]
+	then mv ${f%.*}_domains.dat intel/$meta_source/
+elif [ -f ${f%.*}_hashes.dat ]
+	then mv ${f%.*}_hashes.dat intel/$meta_source/
+elif [ -f ${f%.*}_ips.dat ]
+	then mv ${f%.*}_ips.dat intel/$meta_source/
+fi
+
+cat > intel/$meta_source/__load__.bro << EOF
+
 redef Intel::read_files += {
-        "/opt/bro/share/bro/intel/my_new_file.dat"
+        @DIR + "/${f%.*}_domains.dat",
+	@DIR + "/${f%.*}_hashes.dat",
+	@DIR + "/${f%.*}_ips.dat"
 };
 EOF
