@@ -41,7 +41,7 @@ function ip_generation () {
         then return 1
   fi
   echo -e "$bro_header" > "${1%.*}"_ips.dat
-  for ip in "$data"
+  for ip in $data
   do
     echo -e "$ip\t$bro_addr\t$meta_source\t$meta_description\t$meta_url" >> "${1%.*}"_ips.dat
   done
@@ -50,15 +50,15 @@ function ip_generation () {
 function hash_generation () { # pass filename
   # This regexp will match MD5\SHA1\SHA256 hashes
   # Assuming reports post them separately
-  md5_hash="[a-f0-9]{32}"
-  sha1_hash="[a-f0-9]{40}"
-  sha256_hash="[a-f0-9]{64}"
+  md5_hash="^[a-f0-9]{32}$"
+  sha1_hash="^[a-f0-9]{40}$"
+  sha256_hash="^[a-f0-9]{64}$"
   data=`cat "$1"|egrep "($md5_hash|$sha1_hash|$sha256_hash)"|sort|uniq`
   if [ -z "$data" ]
 	then return 1
   fi
   echo -e "$bro_header" > "${1%.*}"_hashes.dat
-  for hash in "$data"
+  for hash in $data
   do
     echo -e "$hash\t$bro_hash\t$meta_source\t$meta_description\t$meta_url" >> "${1%.*}"_hashes.dat
   done
@@ -74,15 +74,15 @@ function domain_generation () { # pass filename
   domain_regexp="^([a-z0-9\-]+\.)*[a-z0-9\-]+(\.|\[\.\])[a-z]+$"
   # Reports often include filenames with extension that will also be matched by our domain
   # regexp. Use this to exclude them from matching by extenstion
-  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp)$"
+  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp|*.doc|*.xls|*.ppt|*.pdf|*.txt)$"
   #Strip [.] from domain name
   strip_domain="s/\[//g -e s/\]//g"
-  data=`cat "$1"|egrep "$domain_regexp"|egrep -v "$domain_exclude"|sort|uniq`
+  data=`cat "$1"|egrep -o "$domain_regexp"|egrep -v "$domain_exclude"|sort|uniq`
   if [ -z "$data" ]
         then return 1
-  fi  
+  fi 
   echo -e "$bro_header" > "${1%.*}"_domains.dat
-  for domain in "$data"
+  for domain in $data
   do
     domain=`echo "$domain"|sed -e $strip_domain`
     echo -e "$domain\t$bro_domain\t$meta_source\t$meta_description\t$meta_url" >> "${1%.*}"_domains.dat
@@ -189,12 +189,14 @@ hash_generation "$txt_file"
 ip_generation "$txt_file"
 
 # Move our temp file back into current folder with initial name.dat
-if [ -f "${txt_file%.*}"_domains.dat ]
-	then mv "${txt_file%.*}"_domains.dat "${f%.*}"_domains.dat
-elif [ -f "${txt_file%.*}"_hashes.dat ]
-	then mv "${txt_file%.*}"_hashes.dat "${f%.*}"_hashes.dat
-elif [ -f "${txt_file%.*}"_ips.dat ]
-	then mv "${txt_file%.*}"_ips.dat "${f%.*}"_ips.dat
+if [ -f "${txt_file%.*}_domains.dat" ]
+	then mv "${txt_file%.*}_domains.dat" "${f%.*}_domains.dat"
+fi
+if [ -f "${txt_file%.*}_hashes.dat" ]
+	then mv "${txt_file%.*}_hashes.dat" "${f%.*}_hashes.dat"
+fi
+if [ -f "${txt_file%.*}_ips.dat" ]
+	then mv "${txt_file%.*}_ips.dat" "${f%.*}_ips.dat"
 fi
 # prepare intel folder
 if [ ! -d intel ]
@@ -206,9 +208,11 @@ if [ ! -d intel/"$meta_source" ]
 fi
 if [ -f "${f%.*}"_domains.dat ]
 	then mv "${f%.*}"_domains.dat intel/"$meta_source"/
-elif [ -f "${f%.*}"_hashes.dat ]
+fi
+if [ -f "${f%.*}"_hashes.dat ]
 	then mv "${f%.*}"_hashes.dat intel/"$meta_source"/
-elif [ -f "${f%.*}"_ips.dat ]
+fi
+if [ -f "${f%.*}"_ips.dat ]
 	then mv "${f%.*}"_ips.dat intel/"$meta_source"/
 fi
 
