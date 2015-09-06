@@ -74,7 +74,7 @@ function domain_generation () { # pass filename
   domain_regexp="^([a-z0-9\-]+\.)*[a-z0-9\-]+(\.|\[\.\])[a-z]+$"
   # Reports often include filenames with extension that will also be matched by our domain
   # regexp. Use this to exclude them from matching by extenstion
-  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp|*.doc|*.xls|*.ppt|*.pdf|*.txt)$"
+  domain_exclude="(*.exe|*.gif|*.jpg|*.jpeg|*.swf|*.jar|*.dll|*.ps1|*.png|*.bin|*.sys|*.vbs|*.php|*.html|*.htm|*.js|*.dat|*.pdb|*.sh|*.bat|*.dmp|*.doc|*.xls|*.ppt|*.pdf|*.txt|*.tcl)$"
   #Strip [.] from domain name
   strip_domain="s/\[//g -e s/\]//g"
   data=`cat "$1"|egrep "$domain_regexp"|egrep -v "$domain_exclude"|sort|uniq`
