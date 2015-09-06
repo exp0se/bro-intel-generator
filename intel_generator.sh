@@ -105,7 +105,7 @@ cat << EOF
     ..%%%%...%%%%%%..%%..%%..%%%%%%..%%..%%..%%..%%....%%.....%%%%...%%..%%.
     .......................... https://github.com/exp0se/bro-intel-generator
 
-usage: "$0" options
+usage: $0 options
 
 This script will generate Bro Intel files from saved html or pdf reports
 
