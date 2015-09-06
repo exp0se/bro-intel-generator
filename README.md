@@ -18,6 +18,9 @@ aptitude install html2text
 
 Download some reports in html or pdf format 
 
+Reports can't have whitespaces in names, so you will need to rename those with whitespaces
+because bro doesn't understand whitespaces in resulting files.
+
 Then feed them to tool like this
 ```
 ./intel_generator.sh -f apt_report.pdf -p
