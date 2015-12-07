@@ -144,7 +144,7 @@ while getopts ":f:s:d:u:htp" opt; do
     ;;
     s)
     s_set=1
-    meta_source="$OPTARG"
+    meta_source=echo "$OPTARG" | sed 's/ /_/g'
     ;;
     d)
     meta_description="$OPTARG"
@@ -166,7 +166,7 @@ done
 [ "$meta_description" ]         || meta_description="-"
 [ "$meta_url" ]                 || meta_url="-"
 [ "$f_required" -eq 1 ]         || die "[-] -f is required parameter"
-[ "$s_set" -eq 1 ]              || meta_source="${f%.*}"
+[ "$s_set" -eq 1 ]              || meta_source_prepare="$(echo ${f%.*} | sed 's/ /_/g')"; meta_source=`echo $meta_source_prepare`
 [ "$html" -eq 1 -a "$pdf" -eq 1 ] && die "[-] Both html and pdf options can't be set. Choose only one."
 }
 
@@ -190,13 +190,22 @@ ip_generation "$txt_file"
 
 # Move our temp file back into current folder with initial name.dat
 if [ -f "${txt_file%.*}_domains.dat" ]
-	then mv "${txt_file%.*}_domains.dat" "${f%.*}_domains.dat"
+	then
+	file_domains_prepare="$(echo ${f%.*}_domains.dat | sed 's/ /_/g')"
+	file_domains=`echo $file_domains_prepare`
+	mv "${txt_file%.*}_domains.dat" "$file_domains"
 fi
 if [ -f "${txt_file%.*}_hashes.dat" ]
-	then mv "${txt_file%.*}_hashes.dat" "${f%.*}_hashes.dat"
+	then
+	file_hashes_prepare="$(echo ${f%.*}_hashes.dat | sed 's/ /_/g')"
+	file_hashes=`echo $file_hashes_prepare`
+	mv "${txt_file%.*}_hashes.dat" "$file_hashes"
 fi
 if [ -f "${txt_file%.*}_ips.dat" ]
-	then mv "${txt_file%.*}_ips.dat" "${f%.*}_ips.dat"
+	then
+	file_ips_prepare="$(echo ${f%.*}_ips.dat | sed 's/ /_/g')"
+	file_ips=`echo $file_ips_prepare`
+	mv "${txt_file%.*}_ips.dat" "$file_ips"
 fi
 # prepare intel folder
 if [ ! -d intel ]
@@ -206,27 +215,26 @@ fi
 if [ ! -d intel/"$meta_source" ] 
 	then mkdir intel/"$meta_source"
 fi
-if [ -f "${f%.*}"_domains.dat ]
-	then mv "${f%.*}"_domains.dat intel/"$meta_source"/
+if [ -f $file_domains ]
+	then mv $file_domains intel/"$meta_source"/
 fi
-if [ -f "${f%.*}"_hashes.dat ]
-	then mv "${f%.*}"_hashes.dat intel/"$meta_source"/
+if [ -f $file_hashes ]
+	then mv $file_hashes intel/"$meta_source"/
 fi
-if [ -f "${f%.*}"_ips.dat ]
-	then mv "${f%.*}"_ips.dat intel/"$meta_source"/
+if [ -f $file_ips ]
+	then mv $file_ips intel/"$meta_source"/
 fi
 
-cat > intel/"$meta_source"/__load__.bro << EOF
+cat > intel/$meta_source/__load__.bro << EOF
 
 redef Intel::read_files += {
-        @DIR + "/${f%.*}_domains.dat",
-	@DIR + "/${f%.*}_hashes.dat",
-	@DIR + "/${f%.*}_ips.dat"
+        @DIR + /$file_domains,
+	@DIR + /$file_hashes,
+	@DIR + /$file_ips
 };
 EOF
 if [ -f intel/__load__.bro ]
-then
-echo @load ./"$meta_source" >> intel/__load__.bro
+	then echo @load ./$meta_source >> intel/__load__.bro
 else
 cat > intel/__load__.bro << EOF
 @load base/frameworks/intel
@@ -243,3 +251,5 @@ cat <<EOF
 [+] they will be added to intel directory then you can copy everything at once.
 EOF
 
+# clean up
+rm -f $txt_file
